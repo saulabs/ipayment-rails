@@ -4,11 +4,11 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "ruby-ipayment"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
-    gem.email = "dieter@komendera.com"
-    gem.homepage = "http://github.com/kommen/ruby-ipayment"
+    gem.name = "ipayment-rails"
+    gem.summary = "Ruby on Rails implementation for the iPayment gateway"
+    gem.description = "Ruby on Rails implementation for the european 1&1 iPayment gateway for credit card processing."
+    gem.email = "dieter@abloom.at"
+    gem.homepage = "http://saulabs.net/projects/ipayment-rails"
     gem.authors = ["Dieter Komendera"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
@@ -39,7 +39,7 @@ Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
 
   rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = "ruby-ipayment #{version}"
+  rdoc.title = "ipayment-rails #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
