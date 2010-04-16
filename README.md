@@ -6,8 +6,27 @@ Ruby on Rails implementation for the european 1&1 iPayment gateway for credit ca
 * [Repository](http://github.com/saulabs/ipayment-rails)
 
 Technical documentation from iPayment:
-[http://www.1und1.info/downloads/ipayment_Technik-Handbuch_2008-08.pdf](http://www.1und1.info/downloads/ipayment_Technik-Handbuch_2008-08.pdf)
+[http://www.1und1.info/downloads/ipayment_Technik-Handbuch_2008-08.pdf](http://www.1und1.info/downloads/ipayment_Technik-Handbuch_2008-08.pdf) (German)
 
+This plugin provides a simple way to implement credit card processing by providing wrappers and helpers around the 1&1 iPayment SOAP API. As the credit card data doesn't touch your application's servers, **no PCI certification is needed**.
+
+## Examples
+
+See the _example/_ directory for some example code.
+
+## How it works
+
+* *form_for_ipayment_auth* creates a session and stores transaction data into it (amount, currency, etc.).
+* The HTML form POSTs the user entered credit card data SSL secured directly to the iPayment servers.
+* The iPayment servers will process the transaction and request the *callback_url* provided to *form_for_ipayment_auth* passing the result to it. At this point your application should handle the transaction, e.g. booking the amount to the user account if it is successful.
+* iPayment will redirect the user to *success_url* if the transactions succeeds or to *error_url* if it doesn't.
+* All this happens transparently to the user – except for a short change in the address field of the browser, he stays on your site.
+
+## How to get it work
+
+* Get iPayment credentials and put them into the config file. The file goes into *RAILS_ROOT/config/ipayment.yml* (or use a test account, see *ipayment_Technik-Handbuch_2008-08.pdf* page 10).
+* Implement a controller to handle callback, success and error (see controller.rb example).
+* Add a view using *form_for_ipayment_auth* passing it an Ipayment::Payment with payment data (see controller.rb and new.html.erb).
 
 ## Note on Patches/Pull Requests
  
