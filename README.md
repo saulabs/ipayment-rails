@@ -5,6 +5,10 @@ Ruby on Rails implementation for the european 1&1 iPayment gateway for credit ca
 * [Project page](http://saulabs.net/projects/ipayment-rails)
 * [Repository](http://github.com/saulabs/ipayment-rails)
 
+Technical documentation from iPayment:
+[http://www.1und1.info/downloads/ipayment_Technik-Handbuch_2008-08.pdf](http://www.1und1.info/downloads/ipayment_Technik-Handbuch_2008-08.pdf)
+
+
 ## Note on Patches/Pull Requests
  
 * Fork the project.
@@ -18,4 +22,4 @@ Ruby on Rails implementation for the european 1&1 iPayment gateway for credit ca
 
 ## Copyright
 
-Copyright (c) 2009-2009 Dieter Komendera. See LICENSE for details.
+Copyright (c) 2009-2010 Dieter Komendera. See LICENSE for details.

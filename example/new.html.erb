@@ -1,0 +1,36 @@
+<% form_for_ipayment_auth(@ipayment, {
+  :success_url => url_for(:action => 'success', :only_path => false), # url for the success action
+  :error_url => url_for(:action => 'error', :only_path => false),     # url for the error action
+  :callback_url => url_for(:action => 'callback', :only_path => false)# url for the callback action
+}) do %>
+
+  <fieldset>
+    <label for="addr_name">Name on Card</label>
+    <%= text_field_tag 'addr_name' %>
+  </fieldset>
+
+  <fieldset>
+    <label for="cc_number">CC Number</label>
+    <%= text_field_tag 'cc_number' %>
+  </fieldset>
+
+  <fieldset>
+    <label for="cc_expdate_month">expiry date</label>
+    <%= select_tag 'cc_expdate_month', options_for_select(1 .. 12) %>
+    <%= select_tag 'cc_expdate_year', options_for_select(Time.now.year .. 10.years.from_now.year) %>
+  </fieldset>
+
+  <fieldset>
+    <label for="cc_checkcode">CVC:</label>
+    <%= text_field_tag 'cc_checkcode' %>
+  </fieldset>
+
+  <fieldset>
+    <%= check_box_tag 'use_datastorage', '1', true %>
+    <label for="use_datastorage">Store CC data for next transaction</label>
+  </fieldset>
+
+  <fieldset>
+    <%= submit_tag "Start transaction" %>
+  </fieldset>
+<% end %>
