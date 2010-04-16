@@ -3,7 +3,7 @@ require 'soap/wsdlDriver'
 module Ipayment
   class Config
     def self.get
-      App.config['creditcard']
+      YAML.load(File.open("#{RAILS_ROOT}/config/ipayment.yml"))
     end
   end
 
