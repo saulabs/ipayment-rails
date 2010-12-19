@@ -9,7 +9,7 @@ class PaymentController < ApplicationController
       :payment_type => 'cc',
       :invoice_text => 'Payment #1234',
       :options => {
-        :payment_id => 1111
+        :payment_id => 1111 # e.g your internal payment handle
       }
     })
   end
@@ -18,6 +18,9 @@ class PaymentController < ApplicationController
     # requested from the ipayment servers
     handle_ipayment_callback do |ipayment|
       # ipayment parameter is an Ipayment::Payment instance
+      # This is the right place to handle a payment, e.g credit the payment amount to the user.
+      # You've access to the options passed to the Ipayment::Payment instance, e.g:
+      # ipayment.options['payment_id'] #=> 1111
     end
     head :ok
   end
