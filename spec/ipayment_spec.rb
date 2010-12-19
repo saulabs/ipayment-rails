@@ -1,4 +1,5 @@
-require 'spec_helper'
+# -*- encoding : utf-8 -*-
+require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Ipayment do
   
@@ -12,11 +13,11 @@ describe Ipayment do
       Env
     end
   end
-  
+
   describe 'Connection' do
     it "should initialise a driver when initialized" do
       factory = mock('factory')
-      factory.should_receive(:create_rpc_driver).once.and_return(driver = mock('driver'))
+      factory.should_receive(:create_rpc_driver).once.and_return(driver = mock('driver', :wiredump_file_base= => nil))
       SOAP::WSDLDriverFactory.should_receive(:new).and_return(factory)
       connection = Ipayment::Connection.new
       connection.driver.should == driver
@@ -26,14 +27,19 @@ describe Ipayment do
   describe 'Helpers module' do
     class MyViewClass
       include Ipayment::Helpers
+      
+      def protect_against_forgery?
+        false
+      end
+      
     end
 
     before(:each) do
-      @ipayment = mock('ipayment', :generate_session_id => '1234')
+      @ipayment = mock('ipayment', :generate_session_id => '1234', :config => ipayment_config)
       @view = MyViewClass.new
       @view.stub!(:concat).and_return('concatinated')
       @view.stub!(:hidden_field_tag).and_return('hidden_field_tag')
-      @view.stub!(:form_tag).and_yield(@view).and_return('form_tag')
+      @view.stub!(:form_tag).and_yield().and_return('form_tag')
     end
 
     it "should generate session id for the ipayment" do
@@ -47,7 +53,7 @@ describe Ipayment do
 
     it "should generate a form" do
       @view.should_receive(:form_tag).with(
-        "https://ipayment.de/merchant/#{Ipayment::Config.get['accountId']}/processor/2.0/",
+        "https://ipayment.de/merchant/#{@ipayment.config['accountId']}/processor/2.0/",
         { :class => 'cc-form' })
       @view.form_for_ipayment_auth(@ipayment, { :success_url => 'success_url',
         :error_url => 'success_url', :class => 'cc-form' }) {}
@@ -101,12 +107,12 @@ describe Ipayment do
 
       it "should validate request source" do
         @controller.should_receive(:validate_ipayment_request_source).and_return(false)
-        @controller.send(:handle_ipayment_callback) { |x| }
+        @controller.send(:handle_ipayment_callback, ipayment_config) { |x| }
       end
 
       it "should yield nil if request source is not valid" do
         @controller.stub!(:validate_ipayment_request_source).and_return(false)
-        @controller.send(:handle_ipayment_callback) do |payment|
+        @controller.send(:handle_ipayment_callback, ipayment_config) do |payment|
           payment.should be_nil
         end
       end
@@ -114,8 +120,8 @@ describe Ipayment do
       it "parse Ipayment::Payment form params" do
         @controller.stub!(:validate_ipayment_request_source).and_return(true)
         @controller.should_receive(:params).and_return(params = { :id => 1 })
-        Ipayment::Payment.should_receive(:parse_from_params).with(params).and_return(payment = mock('ipayment'))
-        @controller.send(:handle_ipayment_callback) do |payment|
+        Ipayment::Payment.should_receive(:parse_from_params).with(ipayment_config, params).and_return(payment = mock('ipayment'))
+        @controller.send(:handle_ipayment_callback, ipayment_config) do |payment|
           payment.should == payment
         end
       end
@@ -125,8 +131,9 @@ describe Ipayment do
   describe 'Service' do
     before(:each) do
       @driver = mock('driver')
-      Ipayment::Service.stub!(:driver).and_return(@driver)
-      Ipayment::Service.stub!(:account_data).and_return(@account_data = { 'accountId' => '123' })
+      @service =  Ipayment::Service.new(ipayment_config)
+      @service.stub!(:driver).and_return(@driver)
+      @service.stub!(:account_data).and_return(@account_data = { 'accountId' => '123' })
     end
 
     describe "create_session" do
@@ -135,7 +142,7 @@ describe Ipayment do
           { 'trxAmount' => '100', 'trxCurrency' => 'EUR', 'invoiceText' => 'Invoice1' },
           'auth', 'cc', {}, { 'redirectUrl' => 'success', 'silentErrorUrl' => 'error' }
         ).and_return(['1234'])
-        Ipayment::Service.create_session({
+        @service.create_session({
           :amount => '100', :currency => 'EUR', :payment_type => 'cc', :options => {},
           :transaction_type => 'auth', :success_url => 'success', :error_url => 'error',
           :invoice_text => 'Invoice1'
@@ -148,7 +155,7 @@ describe Ipayment do
 
     describe 'initialize' do
       it "should populate attributes on initialize" do
-        payment = Ipayment::Payment.new(payment_attributes)
+        payment = Ipayment::Payment.new(ipayment_config, payment_attributes)
         payment.amount.should == 100
         payment.currency.should == 'EUR'
         payment.payment_type.should == 'cc'
@@ -157,22 +164,24 @@ describe Ipayment do
 
       it "should raise error if initialized with unknown attribute" do
         lambda {
-          Ipayment::Payment.new({ :fuu => 100 })
+          Ipayment::Payment.new(ipayment_config, { :fuu => 100 })
         }.should raise_error
       end
     end
 
     describe 'generate_session_id' do
       it "should create session with own attributes merged into params" do
-        Ipayment::Service.should_receive(:create_session, payment_attributes(:fuu => 'bar')).and_return('12334')
-        payment = Ipayment::Payment.new(payment_attributes)
+        @service = Ipayment::Service.new(ipayment_config)
+        @service.should_receive(:create_session, payment_attributes(:fuu => 'bar')).and_return('12334')
+        payment = Ipayment::Payment.new(ipayment_config, payment_attributes)
+        payment.instance_variable_set("@service", @service)
         payment.generate_session_id(:fuu => 'bar').should == '12334'
       end
     end
 
     describe 'parse_from_params' do
       before(:all) do
-        @payment = Ipayment::Payment.parse_from_params(params)
+        @payment = Ipayment::Payment.parse_from_params(ipayment_config, params)
       end
 
       it "should set correct attributes" do
@@ -188,7 +197,7 @@ describe Ipayment do
         end
 
         it "should set @paid to true if resonse was success but transaction type was not auth" do
-          @payment = Ipayment::Payment.parse_from_params(params('trx_typ' => 'capture'))
+          @payment = Ipayment::Payment.parse_from_params(ipayment_config, params('trx_typ' => 'capture'))
           @payment.paid?.should be_false
         end
 
@@ -210,11 +219,17 @@ describe Ipayment do
           @payment.error_code.should be_zero
           @payment.error_message.should be_nil
         end
+
+        it "should parse cc data with umlauts" do
+          # iPayment sends LATIN1
+          @payment = Ipayment::Payment.parse_from_params(ipayment_config, params('paydata_cc_cardowner' => Iconv.conv('LATIN1', 'UTF8', 'HEINZ MÜLLER')))
+          @payment.cc_data[:name].should == "HEINZ MÜLLER"
+        end
       end
 
       describe "on error" do
         before(:all) do
-          @payment = Ipayment::Payment.parse_from_params(params_error)
+          @payment = Ipayment::Payment.parse_from_params(ipayment_config, params_error)
         end
 
         it "should set @paid to false if resonse was no success" do
@@ -261,30 +276,45 @@ describe Ipayment do
       }.merge(options)
     end
   end
+
+  def ipayment_config
+    {
+      'accountId' => 99999,
+      'trxuserId' =>  99999,
+      'trxpassword' => 0,
+      'adminactionpassword' => '5cfgRT34xsdedtFLdfHxj7tfwx24fe'
+    }
+  end
+
 end
 
 if ENV['LIVE_TESTS'] == '1'
   describe Ipayment, "live" do
+    
+    before(:each) do
+      @service = Ipayment::Service.new(ipayment_config)
+    end
+    
+    def test_storage_id
+      "8086202"
+    end
 
     describe "createSession" do
 
       it "should return a valid session id" do
-        Ipayment::Service.create_session({
+        @service.create_session({
           :amount => 100,
           :currency => 'EUR',
           :type => 'auth',
           :payment_type => 'cc',
+          :transaction_type => "auth",
           :redirect_url => 'http://sauspiel.local/success',
           :silent_error_url => 'http://sauspiel.local/fail'
         }).should match(/[a-zA-Z0-9]{32}/)
       end
     end
-  end
-end
 
-module Ipayment
-  class Config
-    def self.get
+    def ipayment_config
       {
         'accountId' => 99999,
         'trxuserId' =>  99999,
@@ -293,5 +323,6 @@ module Ipayment
       }
     end
   end
+
 end
 
