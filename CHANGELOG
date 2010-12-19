@@ -1,0 +1,11 @@
+*0.2*
+
+* Ruby version 1.9.2 required
+* Changed the way how to pass configuration parameters to support multiple configurations
+* Added support for recurring payments
+* Fixed encoding issues
+
+
+*0.1*
+
+* First release
