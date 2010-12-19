@@ -1,0 +1,30 @@
+<%= form_for_ipayment_check_save(@ipayment, {
+  :success_url => url_for(:action => 'ipayment_success', :only_path => false),
+  :error_url => url_for(:action => 'ipayment_error', :only_path => false),
+  :callback_url => url_for(:action => 'ipayment_callback', :only_path => false)
+}) do %>
+  <fieldset>
+    <label for="addr_name">Name on Card</label>
+    <%= text_field_tag 'addr_name' %>
+  </fieldset>
+
+  <fieldset>
+    <label for="cc_number">CC Number</label>
+    <%= text_field_tag 'cc_number' %>
+  </fieldset>
+
+  <fieldset>
+    <label for="cc_expdate_month">expiry date</label>
+    <%= select_tag 'cc_expdate_month', options_for_select(1 .. 12) %>
+    <%= select_tag 'cc_expdate_year', options_for_select(Time.now.year .. 10.years.from_now.year) %>
+  </fieldset>
+
+  <fieldset>
+    <label for="cc_checkcode">CVC:</label>
+    <%= text_field_tag 'cc_checkcode' %>
+  </fieldset>
+
+  <fieldset>
+    <%= submit_tag "Create Subscription" %>
+  </fieldset>
+<% end %>
