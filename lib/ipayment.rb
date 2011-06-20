@@ -89,48 +89,48 @@ module Ipayment
     end
 
     def generate_session_id(params)
-      params = params.merge({
+      params = {
         :amount => amount,
         :currency => currency,
         :payment_type => payment_type,
         :invoice_text => invoice_text,
         :options => options
-      })
+      }.merge(params)
 
-      params = params.merge({
+      params = {
         :recurring_typ => 'initial',
         :recurring_frequency => 28, # monthly
         :recurring_expiry => 10.years.from_now.strftime("%Y/%m/%d"), # some future date, get's autocorrected to cc expiry date by recurring_allow_expiry_correction
         :recurring_allow_expiry_correction => 1
-      }) if initial_recurring?
+      }.merge(params) if initial_recurring?
 
-      params = params.merge({
+      params = {
         :recurring_typ => 'sequencial'
-      }) if recurring?
+      }.merge(params) if recurring?
 
       @service.create_session(params)
     end
     
     # uses SOAP webservice to charge creditcard
     def charge!(params)
-      params = params.merge({
+      params = {
         :amount => amount,
         :currency => currency,
         :invoice_text => invoice_text,
         :options => options
-      })
+      }.merge(params)
 
       if initial_recurring?
-        params = params.merge({
+        params = {
           :recurring_typ => 'initial',
           :recurring_frequency => 28, # monthly
           :recurring_expiry => 10.years.from_now.strftime("%Y/%m/%d"), # some future date, get's autocorrected to cc expiry date by recurring_allow_expiry_correction
           :recurring_allow_expiry_correction => 1
-        })
+        }.merge(params)
       elsif recurring?
-        params = params.merge({
+        params = {
           :recurring_typ => 'sequencial'
-        }) 
+        }.merge(params)
       end
       result = @service.reauth(params)[0]
       
